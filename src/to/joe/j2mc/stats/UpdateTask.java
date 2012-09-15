@@ -20,7 +20,9 @@ public class UpdateTask implements Runnable {
             final StatsObject stat = iterator.next();
             try {
                 PreparedStatement query = stat.getQuery();
-                query.executeUpdate();
+                if (query != null) {
+                    query.executeUpdate();
+                }
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to update stats for " + stat.user + ": " + e.getMessage());
             }

@@ -29,12 +29,14 @@ public class EventListener implements Listener{
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onJoin(PlayerJoinEvent event) {
         this.plugin.statObjects.put(event.getPlayer().getName(), new StatsObject(event.getPlayer().getName()));
+        this.plugin.addToQueue(event.getPlayer().getName());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         try {
             this.plugin.statObjects.get(event.getPlayer().getName()).getQuery().execute();
+            this.plugin.addToQueue(event.getPlayer().getName());
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
@@ -45,19 +47,23 @@ public class EventListener implements Listener{
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         this.plugin.statObjects.get(event.getPlayer().getName()).blocksPlaced++;
+        this.plugin.addToQueue(event.getPlayer().getName());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         this.plugin.statObjects.get(event.getPlayer().getName()).blocksBroken++;
+        this.plugin.addToQueue(event.getPlayer().getName());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
         this.plugin.statObjects.get(event.getEntity().getName()).timesDied++;
+        this.plugin.addToQueue(event.getEntity().getName());
         if (event.getEntity().getKiller() != null) {
             Player killer = event.getEntity().getKiller();
             this.plugin.statObjects.get(killer.getName()).playersKilled++;
+            this.plugin.addToQueue(killer.getName());
         }
     }
     
@@ -69,17 +75,20 @@ public class EventListener implements Listener{
         if (event.getEntity().getKiller() != null) {
             Player killer = event.getEntity().getKiller();
             this.plugin.statObjects.get(killer.getName()).mobsKilled++;
+            this.plugin.addToQueue(killer.getName());
         }
     }
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         this.plugin.statObjects.get(event.getPlayer().getName()).timesChatted++;
+        this.plugin.addToQueue(event.getPlayer().getName());
     }
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         this.plugin.statObjects.get(event.getPlayer().getName()).distanceMoved += event.getFrom().distanceSquared(event.getTo());
+        this.plugin.addToQueue(event.getPlayer().getName());
     }
 
 }

@@ -7,47 +7,68 @@ import java.sql.SQLException;
 import to.joe.j2mc.core.J2MC_Manager;
 
 public class StatsObject {
-    
+
     public String user;
-    
+    private int id;
+
     public int blocksPlaced;
     public int blocksBroken;
     public int playersKilled;
+    public int mobsKilled;
     public int timesDied;
+    public int timesChatted;
+    public double distanceMoved; // For performance reasons this is the squared value of the distance, needs to be square rooted to obtain the proper distance
 
     public StatsObject(String user) {
         try {
+            
+            PreparedStatement idQuery = J2MC_Manager.getMySQL().getFreshPreparedStatementHotFromTheOven("SELECT `id` FROM `users` WHERE `name`=?");
+            idQuery.setString(1, user);
+            ResultSet idResult = idQuery.executeQuery();
+            
+            if (!idResult.next()) {
+                throw new IllegalArgumentException("Invalid player name: " + user + "!");
+            } else {
+                this.id = idResult.getInt("id");
+            }
 
-            PreparedStatement ps = J2MC_Manager.getMySQL().getFreshPreparedStatementHotFromTheOven("SELECT * FROM `stats` WHERE `user`=?");
-            ps.setString(1, user);
+            PreparedStatement ps = J2MC_Manager.getMySQL().getFreshPreparedStatementHotFromTheOven("SELECT * FROM `stats` WHERE `id`=?");
+            ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
 
             if (!rs.next()) {
                 // No existing row for the user in table
-                PreparedStatement insert = J2MC_Manager.getMySQL().getFreshPreparedStatementHotFromTheOven("INSERT INTO `stats` (`user`) VALUES (?)");
-                insert.setString(1, user);
+                PreparedStatement insert = J2MC_Manager.getMySQL().getFreshPreparedStatementHotFromTheOven("INSERT INTO `stats` (`id`) VALUES (?)");
+                insert.setInt(1, id);
                 insert.executeUpdate();
 
                 this.blocksPlaced = 0;
                 this.blocksBroken = 0;
                 this.playersKilled = 0;
+                this.mobsKilled = 0;
                 this.timesDied = 0;
+                this.timesChatted = 0;
+                this.distanceMoved = 0;
 
                 this.user = user;
 
             } else {
                 // Row found, read from there
                 this.user = user;
+                
                 this.blocksPlaced = rs.getInt("blocks_placed");
                 this.blocksBroken = rs.getInt("blocks_broken");
                 this.playersKilled = rs.getInt("players_killed");
+                this.mobsKilled = rs.getInt("mobs_killed");
                 this.timesDied = rs.getInt("times_died");
+                this.timesChatted = rs.getInt("times_chatted");
+                this.distanceMoved = Math.pow(rs.getDouble("distance_moved"), 2); // needs to be distance^2 to conform with squared standards here
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
     }
 
     @Override
@@ -65,11 +86,24 @@ public class StatsObject {
         }
         return false;
     }
+    
+    @Override
+    public String toString() {
+        return "[ " + user + ";" + id + ": " + blocksPlaced + ", " + blocksBroken + ", " + playersKilled + ", " + mobsKilled + ", " + timesDied + ", " + timesChatted + ", " + Math.sqrt(distanceMoved) + "]";
+    }
 
     public PreparedStatement getQuery() {
-        //TODO: return a prepared statement to update the user's row
         try {
-            PreparedStatement ps = J2MC_Manager.getMySQL().getFreshPreparedStatementHotFromTheOven("");
+            String sql = "Update `stats` SET `blocks_placed`=?, `blocks_broken`=?, `players_killed`=?, mobs_killed=?, `times_died`=?, `times_chatted`=?, `distance_moved`=? WHERE `id`=?";
+            PreparedStatement ps = J2MC_Manager.getMySQL().getFreshPreparedStatementHotFromTheOven(sql);
+            ps.setInt(1, blocksPlaced);
+            ps.setInt(2, blocksBroken);
+            ps.setInt(3, playersKilled);
+            ps.setInt(4, mobsKilled);
+            ps.setInt(5, timesDied);
+            ps.setInt(6, timesChatted);
+            ps.setDouble(7, Math.sqrt(distanceMoved));
+            ps.setInt(8, id);
             return ps;
         } catch (SQLException e) {
             e.printStackTrace();

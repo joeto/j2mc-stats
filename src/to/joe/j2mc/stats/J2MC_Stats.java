@@ -2,6 +2,8 @@ package to.joe.j2mc.stats;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -9,8 +11,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitWorker;
 
+
+import to.joe.j2mc.core.J2MC_Manager;
 import to.joe.j2mc.stats.util.StatsObject;
-import to.joe.j2mc.stats.util.TimeLineUpdateTask;
 
 public class J2MC_Stats extends JavaPlugin {
 
@@ -40,8 +43,23 @@ public class J2MC_Stats extends JavaPlugin {
                 e.printStackTrace();
             }
         }
+        
         this.timelineEnabled = this.getConfig().getBoolean("enabletimeline");
         this.statObjects = new ConcurrentHashMap<String, StatsObject>();
+        
+        try {
+            DatabaseMetaData dbmd = J2MC_Manager.getMySQL().getConnection().getMetaData();
+            if (!dbmd.getTables(null, null, "stats_" + J2MC_Manager.getServerID(), null).next()) {
+                this.getLogger().severe("Stats table not found");
+                this.getServer().getPluginManager().disablePlugin(this);
+            }
+            if (timelineEnabled && !dbmd.getTables(null, null, "stats_timeline_" + J2MC_Manager.getServerID(), null).next()) {
+                this.getLogger().severe("Stats timeline table not found");
+                this.getServer().getPluginManager().disablePlugin(this);                
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         
         if (timelineEnabled) {
             this.timeLineQueue = new ConcurrentLinkedQueue<StatsObject>();

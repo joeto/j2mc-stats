@@ -1,8 +1,8 @@
-package to.joe.j2mc.stats.util;
+package to.joe.j2mc.stats;
 
 import java.sql.SQLException;
 
-import to.joe.j2mc.stats.J2MC_Stats;
+import to.joe.j2mc.stats.util.StatsObject;
 
 public class TimeLineUpdateTask implements Runnable {
     
